@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard GDPS</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Tom Select -->
+  <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { sidebarBg: '#121e38', mainBg: '#f3f6f9' }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f6f9; }
+    .header-bg { background: linear-gradient(135deg, #ffffff 40%, #e0e7ff 100%); }
+    .tab-badge-mtd { background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%); clip-path: polygon(0 0, 90% 0, 100% 100%, 0% 100%); padding-right: 2.5rem; }
+    .tab-badge-ytd { background: linear-gradient(90deg, #0d9488 0%, #14b8a6 100%); clip-path: polygon(0 0, 90% 0, 100% 100%, 0% 100%); padding-right: 2.5rem; }
+    .tab-badge-bapp-mtd { background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); clip-path: polygon(0 0, 90% 0, 100% 100%, 0% 100%); padding-right: 2.5rem; }
+    .tab-badge-bapp-ytd { background: linear-gradient(90deg, #8b5cf6 0%, #a855f7 100%); clip-path: polygon(0 0, 90% 0, 100% 100%, 0% 100%); padding-right: 2.5rem; }
+    .tab-badge-issue { background: linear-gradient(90deg, #0ea5e9 0%, #14b8a6 100%); clip-path: polygon(0 0, 95% 0, 100% 100%, 0% 100%); padding-right: 2.5rem; }
+    
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+
+    .ts-wrapper .ts-control {
+      border-radius: 0.5rem;
+      border-color: #d1d5db;
+      padding: 0.5rem 2rem 0.5rem 2.25rem !important; 
+      font-size: 0.875rem;
+      min-height: 38px;
+      box-shadow: none;
+      background-color: white;
+      cursor: pointer;
+    }
+    .ts-wrapper.focus .ts-control { border-color: #3b82f6; box-shadow: 0 0 0 1px #3b82f6; }
+    .ts-dropdown {
+      border-radius: 0.5rem; font-size: 0.875rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); border-color: #e2e8f0;
+    }
+    .filter-icon { z-index: 10; pointer-events: none; }
+  </style>
+</head>
+<body class="flex h-screen overflow-hidden text-sm text-gray-700">
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="w-64 bg-sidebarBg text-white flex flex-col hidden md:flex shrink-0 transition-all duration-300 relative z-50">
+    <div class="p-5 flex items-center justify-between border-b border-gray-700/50 min-h-[80px]">
+      <img id="sidebarLogo" src="https://lh3.googleusercontent.com/d/1UwO9tFm_T33bux8_tH0Cy25zOD4fs4GX" alt="GDPS Logo" class="w-40 h-20 object-contain transition-opacity duration-200">
+      <button id="toggleSidebarBtn" class="text-gray-400 hover:text-white focus:outline-none transition-colors"><i class="fas fa-bars text-xl"></i></button>
+    </div>
+    
+    <nav class="flex-1 px-3 py-6 space-y-2 overflow-y-auto overflow-x-hidden">
+      <a href="#" class="bg-blue-600 rounded-lg flex items-center px-4 py-3 text-white font-semibold shadow-md shadow-blue-900/50 transition-all">
+        <div class="w-6 text-center mr-3 shrink-0"><i class="fas fa-home text-lg"></i></div> <span class="sidebar-text whitespace-nowrap">Dashboard</span>
+      </a>
+      <a href="#" class="flex items-center px-4 py-3 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all">
+        <div class="w-6 text-center mr-3 shrink-0"><i class="fas fa-coins text-lg"></i></div> <span class="sidebar-text whitespace-nowrap">SLA Service</span>
+      </a>
+    </nav>
+    <div id="sidebarFooter" class="p-6 relative overflow-hidden mt-auto transition-opacity duration-200 whitespace-nowrap">
+      <i class="fas fa-plane text-7xl absolute -bottom-6 -left-4 text-white/5 transform -rotate-45"></i>
+      <div class="relative z-10 text-[11px] leading-tight text-gray-400 italic">Better <span class="font-semibold text-white">Service</span><br>for a Greater <span class="font-semibold text-white">Tomorrow</span></div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="flex-1 flex flex-col h-screen overflow-y-auto bg-mainBg relative">
+    <header class="header-bg border-b border-gray-200 px-8 py-5 flex justify-between items-center shrink-0 sticky top-0 z-40 shadow-sm">
+      <div><h1 class="text-[22px] font-bold text-[#1e3a8a] leading-tight">Dashboard</h1><p class="text-gray-500 text-xs mt-0.5">GDPS Business Performance</p></div>
+      <div class="flex items-center space-x-6">
+        <div class="flex items-center space-x-3 text-right">
+          <i class="far fa-calendar text-gray-400 text-lg"></i>
+          <div class="flex flex-col items-start leading-tight">
+            <span class="text-gray-400 text-[11px]">Last Update</span>
+            <span id="lastUpdateTime" class="font-bold text-gray-800 text-xs">Memuat...</span>
+          </div>
+        </div>
+        <div class="flex items-center space-x-3 pl-6 border-l border-gray-300">
+          <div class="bg-blue-900 text-white rounded-full w-9 h-9 flex items-center justify-center font-bold text-sm shadow-md">FA</div>
+          <div class="flex flex-col leading-tight"><span class="font-bold text-gray-800 text-sm">Faiz Ahmad</span><span class="text-gray-500 text-[10px]">Admin</span></div>
+        </div>
+      </div>
+    </header>
+
+    <div class="p-8 space-y-8 pb-20">
+      
+      <!-- Filters -->
+      <div class="flex flex-wrap gap-4 items-end relative z-30">
+        <div class="flex flex-col space-y-1"><label class="text-xs font-semibold text-blue-700">Year</label>
+          <div class="relative w-32">
+            <i class="far fa-calendar-alt absolute left-3 top-2.5 text-blue-600 filter-icon"></i>
+            <select id="filterYear"><option value="All">All Year</option></select>
+          </div>
+        </div>
+        <div class="flex flex-col space-y-1"><label class="text-xs font-semibold text-blue-700">Month</label>
+          <div class="relative w-40">
+            <i class="far fa-calendar absolute left-3 top-2.5 text-blue-600 filter-icon"></i>
+            <select id="filterMonth"><option value="All">All Month</option></select>
+          </div>
+        </div>
+        <div class="flex flex-col space-y-1"><label class="text-xs font-semibold text-blue-700">Oprep</label>
+          <div class="relative w-48">
+            <i class="far fa-user absolute left-3 top-2.5 text-blue-600 filter-icon"></i>
+            <select id="filterOprep"><option value="All">All Oprep</option></select>
+          </div>
+        </div>
+        <div class="flex flex-col space-y-1"><label class="text-xs font-semibold text-blue-700">Customer</label>
+          <div class="relative w-48">
+            <i class="fas fa-users absolute left-3 top-2.5 text-blue-600 filter-icon"></i>
+            <select id="filterCustomer"><option value="All">All Customer</option></select>
+          </div>
+        </div>
+        <div class="flex flex-col space-y-1"><label class="text-xs font-semibold text-blue-700">Project Code</label>
+          <div class="relative w-48">
+            <i class="far fa-file-alt absolute left-3 top-2.5 text-blue-600 filter-icon"></i>
+            <select id="filterProject"><option value="All">All Project Code</option></select>
+          </div>
+        </div>
+        <button id="btnTerapkan" class="bg-blue-600 hover:bg-blue-700 text-white px-6 h-[38px] rounded-lg font-semibold transition-colors shadow-md ml-auto flex items-center justify-center min-w-[120px]"><i class="fas fa-filter mr-2 text-xs"></i> Terapkan</button>
+      </div>
+
+      <div id="loading" class="text-center text-blue-600 font-bold py-10 bg-white rounded-2xl shadow-sm border border-gray-100">
+        <i class="fas fa-circle-notch fa-spin mr-2 text-2xl mb-2"></i><br>Memuat data dari Spreadsheet...
+      </div>
+
+      <div id="dashboardContent" style="display:none;" class="space-y-14 mt-4 relative z-10">
+        
+        <!-- ================= MTD SECTION ================= -->
+        <div class="relative">
+          <div class="tab-badge-mtd text-white px-5 py-1.5 rounded-t-xl inline-flex items-center font-bold text-sm absolute -top-8 left-0 z-0">
+            <i class="fas fa-database mr-2 text-white/80"></i> MTD <span class="font-normal text-[10px] ml-2 text-white/80 uppercase">Monthly To Date</span>
+          </div>
+          
+          <div class="grid grid-cols-1 xl:grid-cols-3 lg:grid-cols-3 gap-6 bg-transparent pt-2 relative z-10">
+            <!-- MTD Revenue -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 col-span-1">
+              <div class="flex items-center mb-4"><div class="bg-blue-600 text-white rounded-full w-10 h-10 flex justify-center items-center mr-3 shadow-sm"><i class="fas fa-money-bill-wave"></i></div><h3 class="font-extrabold text-[#1e3a8a] text-sm">MTD REVENUE</h3></div>
+              <div class="text-[11px] text-gray-400 mb-4 font-semibold uppercase">Total Revenue</div>
+              <div class="space-y-1 mb-4">
+                <div class="flex justify-between items-center text-xs"><span class="text-gray-500">Plan</span> <span class="font-bold text-purple-600" id="txtMtdRevPlan">Rp0</span></div>
+                <div class="flex justify-between items-center text-xs"><span class="text-gray-500">Actual</span> <span class="font-bold text-purple-400" id="txtMtdRevActual">Rp0</span></div>
+              </div>
+              <div class="flex justify-between items-end mb-3">
+                <p class="text-green-500 font-bold text-[15px]" id="txtMtdRevPerc"><i class="fas fa-arrow-up mr-1"></i>0% <span class="text-gray-400 font-normal text-[10px] ml-1">vs Plan</span></p>
+                <div class="flex items-center text-[10px] space-x-3 text-gray-500 font-medium">
+                  <span class="flex items-center"><span class="w-3 h-3 bg-purple-600 rounded-[3px] mr-1.5"></span> Plan</span>
+                  <span class="flex items-center"><span class="w-3 h-3 bg-purple-400 rounded-[3px] mr-1.5"></span> Actual</span>
+                </div>
+              </div>
+              <div class="h-32 w-full mb-2"><canvas id="mtdRevenueChart"></canvas></div>
+              <div class="border-t border-gray-100 pt-4 mt-4 flex items-start">
+                <div class="bg-yellow-100 text-yellow-600 rounded-full w-7 h-7 flex justify-center items-center mr-3 shrink-0 shadow-sm"><i class="fas fa-info-circle text-[10px]"></i></div>
+                <div><p class="font-bold text-[12px] text-gray-800 mb-0.5">Catatan Revenue MTD</p><p class="text-[11px] text-gray-500 leading-relaxed" id="noteMtdRevenue">-</p></div>
+              </div>
+            </div>
+
+            <!-- MTD Direct Cost -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 col-span-1">
+              <div class="flex items-center mb-4"><div class="bg-teal-500 text-white rounded-full w-10 h-10 flex justify-center items-center mr-3 shadow-sm"><i class="fas fa-coins"></i></div><h3 class="font-extrabold text-[#1e3a8a] text-sm">MTD DIRECT COST</h3></div>
+              <div class="text-[11px] text-gray-400 mb-4 font-semibold uppercase">Total Direct Cost</div>
+              <div class="space-y-1 mb-4">
+                <div class="flex justify-between items-center text-xs"><span class="text-gray-500">Plan</span> <span class="font-bold text-purple-600" id="txtMtdCostPlan">Rp0</span></div>
+                <div class="flex justify-between items-center text-xs"><span class="text-gray-500">Actual</span> <span class="font-bold text-purple-400" id="txtMtdCostActual">Rp0</span></div>
+              </div>
+              <div class="flex justify-between items-end mb-3">
+                <p class="text-green-500 font-bold text-[15px]" id="txtMtdCostPerc"><i class="fas fa-arrow-down mr-1"></i>0% <span class="text-gray-400 font-normal text-[10px] ml-1">vs Plan</span></p>
+                <div class="flex items-center text-[10px] space-x-3 text-gray-500 font-medium">
+                  <span class="flex items-center"><span class="w-3 h-3 bg-purple-600 rounded-[3px] mr-1.5"></span> Plan</span>
+                  <span class="flex items-center"><span class="w-3 h-3 bg-purple-400 rounded-[3px] mr-1.5"></span> Actual</span>
+                </div>
+              </div>
+              <div class="h-32 w-full mb-2"><canvas id="mtdCostChart"></canvas></div>
+              <div class="border-t border-gray-100 pt-4 mt-4 flex items-start">
+                <div class="bg-yellow-100 text-yellow-500 rounded-full w-7 h-7 flex justify-center items-center mr-3 shrink-0 shadow-sm"><i class="fas fa-info-circle text-[10px]"></i></div>
+                <div><p class="font-bold text-[12px] text-gray-800 mb-0.5">Catatan Direct Cost MTD</p><p class="text-[11px] text-gray-500 leading-relaxed" id="noteMtdCost">-</p></div>
+              </div>
+            </div>
+
+            <!-- MTD GPM (UPDATED WITH RKAP) -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 col-span-1">
+              <div class="flex items-center mb-4"><div class="bg-purple-600 text-white rounded-full w-10 h-10 flex justify-center items-center mr-3 shadow-sm"><i class="fas fa-percentage text-sm"></i></div><h3 class="font-extrabold text-[#1e3a8a] text-sm">MTD GPM</h3></div>
+              <div class="text-[11px] text-gray-400 mb-2 font-semibold uppercase">Total GPM</div>
+              <div class="space-y-1 mb-3">
+                <div class="flex justify-between items-center text-xs"><span class="text-gray-500">RKAP</span> <span class="font-bold text-gray-800" id="txtMtdGpmRkap">0%</span></div>
+                <div class="flex justify-between items-center text-xs"><span class="text-gray-500">Plan</span> <span class="font-bold text-purple-600" id="txtMtdGpmPlan">0%</span></div>
+                <div class="flex justify-between items-center text-xs"><span class="text-gray-500">Actual</span> <span class="font-bold text-purple-400" id="txtMtdGpmActual">0%</span></div>
+              </div>
+              <div class="flex justify-between items-end mb-3">
+                <div class="flex flex-col space-y-0.5">
+                  <p class="text-green-500 font-bold text-[14px] leading-none" id="txtMtdGpmPerc"><i class="fas fa-arrow-up mr-1"></i>0% <span class="text-gray-400 font-normal text-[9px] ml-1">vs Plan</span></p>
+                  <p class="text-green-500 font-bold text-[14px] leading-none" id="txtMtdGpmPercRkap"><i class="fas fa-arrow-up mr-1"></i>0% <span class="text-gray-400 font-normal text-[9px] ml-1">vs RKAP</span></p>
+                </div>
+                <div class="flex items-center text-[10px] space-x-3 text-gray-500 font-medium">
+                  <span class="flex items-center"><span class="w-3 h-3 bg-purple-600 rounded-[3px] mr-1.5"></span> Plan</span>
+                  <span class="flex items-center"><span class="w-3 h-3 bg-purple-400 rounded-[3px] mr-1.5"></span> Actual</span>
+                </div>
+              </div>
+              <div class="h-32 w-full mb-2"><canvas id="mtdGpmChart"></canvas></div>
+              <div class="border-t border-gray-100 pt-4 mt-4 flex items-start">
+                <div class="bg-yellow-100 text-yellow-600 rounded-full w-7 h-7 flex justify-center items-center mr-3 shrink-0 shadow-sm"><i class="fas fa-info-circle text-[10px]"></i></div>
+                <div><p class="font-bold text-[12px] text-gray-800 mb-0.5">Catatan GPM MTD</p><p class="text-[11px] text-gray-500 leading-relaxed" id="noteMtdGpm">-</p></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= YTD SECTION ================= -->
+        <div class="relative mt-8">
+          <div class="tab-badge-ytd text-white px-5 py-1.5 rounded-t-xl inline-flex items-center font-bold text-sm absolute -top-8 left-0 z-0">
+            <i class="fas fa-layer-group mr-2 text-white/90"></i> YTD <span class="font-normal text-[10px] ml-2 text-white/90 uppercase">Year To Date</span>
+          </div>
+          <div class="grid grid-cols-1 xl:grid-cols-3 lg:grid-cols-3 gap-6 bg-transparent pt-2 relative z-10">
+            
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 col-span-1">
+              <div class="flex items-center mb-4"><div class="bg-blue-600 text-white rounded-full w-10 h-10 flex justify-center items-center mr-3 shadow-sm"><i class="fas fa-money-bill-wave"></i></div><h3 class="font-extrabold text-[#1e3a8a] text-sm">YTD REVENUE</h3></div>
+              <div class="text-[11px] text-gray-400 mb-4 font-semibold uppercase">Total Revenue</div>
+              <div class="space-y-1 mb-4">
+                <div class="flex justify-between items-center text-xs"><span class="text-gray-500">Plan</span> <span class="font-bold text-purple-600" id="txtYtdRevPlan">Rp0</span></div>
+                <div class="flex justify-between items-center text-xs"><span class="text-gray-500">Actual</span> <span class="font-bold text-purple-400" id="txtYtdRevActual">Rp0</span></div>
+              </div>
+              <div class="flex justify-between items-end mb-3">
+                <p class="text-green-500 font-bold text-[15px]" id="txtYtdRevPerc"><i class="fas fa-arrow-up mr-1"></i>0% <span class="text-gray-400 font-normal text-[10px] ml-1">vs Plan</span></p>
+                <!-- Untuk YTD REVENUE & YTD DIRECT COST -->
+                <div class="flex items-center text-[10px] space-x-3 text-gray-500 font-medium">
+                  <span class="flex items-center"><span class="w-3 h-3 bg-purple-600 rounded-[3px] mr-1.5"></span> Plan</span>
+                  <span class="flex items-center"><span class="w-3 h-[2px] bg-purple-400 mr-1.5"></span> Actual</span>
+                </div>
+              </div>
+              <div class="h-32 w-full"><canvas id="ytdRevenueChart"></canvas></div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 col-span-1">
+              <div class="flex items-center mb-4"><div class="bg-teal-500 text-white rounded-full w-10 h-10 flex justify-center items-center mr-3 shadow-sm"><i class="fas fa-coins"></i></div><h3 class="font-extrabold text-[#1e3a8a] text-sm">YTD DIRECT COST</h3></div>
+              <div class="text-[11px] text-gray-400 mb-4 font-semibold uppercase">Total Direct Cost</div>
+              <div class="space-y-1 mb-4">
+                <div class="flex justify-between items-center text-xs"><span class="text-gray-500">Plan</span> <span class="font-bold text-purple-600" id="txtYtdCostPlan">Rp0</span></div>
+                <div class="flex justify-between items-center text-xs"><span class="text-gray-500">Actual</span> <span class="font-bold text-purple-400" id="txtYtdCostActual">Rp0</span></div>
+              </div>
+              <div class="flex justify-between items-end mb-3">
+                <p class="text-green-500 font-bold text-[15px]" id="txtYtdCostPerc"><i class="fas fa-arrow-down mr-1"></i>0% <span class="text-gray-400 font-normal text-[10px] ml-1">vs Plan</span></p>
+                <!-- Untuk YTD REVENUE & YTD DIRECT COST -->
+                <div class="flex items-center text-[10px] space-x-3 text-gray-500 font-medium">
+                  <span class="flex items-center"><span class="w-3 h-3 bg-purple-600 rounded-[3px] mr-1.5"></span> Plan</span>
+                  <span class="flex items-center"><span class="w-3 h-[2px] bg-purple-400 mr-1.5"></span> Actual</span>
+                </div>
+              </div>
+              <div class="h-32 w-full"><canvas id="ytdCostChart"></canvas></div>
+            </div>
+
+            <!-- YTD GPM (UPDATED WITH RKAP) -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 col-span-1">
+              <div class="flex items-center mb-4"><div class="bg-purple-600 text-white rounded-full w-10 h-10 flex justify-center items-center mr-3 shadow-sm"><i class="fas fa-percentage text-sm"></i></div><h3 class="font-extrabold text-[#1e3a8a] text-sm">YTD GPM</h3></div>
+              <div class="text-[11px] text-gray-400 mb-2 font-semibold uppercase">Total GPM</div>
+              <div class="space-y-1 mb-3">
+                <div class="flex justify-between items-center text-xs"><span class="text-gray-500">RKAP</span> <span class="font-bold text-gray-800" id="txtYtdGpmRkap">0%</span></div>
+                <div class="flex justify-between items-center text-xs"><span class="text-gray-500">Plan</span> <span class="font-bold text-purple-600" id="txtYtdGpmPlan">0%</span></div>
+                <div class="flex justify-between items-center text-xs"><span class="text-gray-500">Actual</span> <span class="font-bold text-purple-400" id="txtYtdGpmActual">0%</span></div>
+              </div>
+              <div class="flex justify-between items-end mb-3">
+                <div class="flex flex-col space-y-0.5">
+                  <p class="text-green-500 font-bold text-[14px] leading-none" id="txtYtdGpmPerc"><i class="fas fa-arrow-up mr-1"></i>0% <span class="text-gray-400 font-normal text-[9px] ml-1">vs Plan</span></p>
+                  <p class="text-green-500 font-bold text-[14px] leading-none" id="txtYtdGpmPercRkap"><i class="fas fa-arrow-up mr-1"></i>0% <span class="text-gray-400 font-normal text-[9px] ml-1">vs RKAP</span></p>
+                </div>
+                <!-- Untuk YTD GPM -->
+                <div class="flex items-center text-[10px] space-x-3 text-gray-500 font-medium">
+                  <span class="flex items-center"><span class="w-3 h-3 bg-purple-600 rounded-[3px] mr-1.5"></span> Plan</span>
+                  <span class="flex items-center"><span class="w-3 h-[2px] bg-purple-400 mr-1.5"></span> Actual</span>
+                </div>
+              </div>
+              <div class="h-32 w-full"><canvas id="ytdGpmChart"></canvas></div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ================= MTD BAPP SECTION ================= -->
+        <div class="relative mt-8">
+          <div class="tab-badge-bapp-mtd text-white px-5 py-1.5 rounded-t-xl inline-flex items-center font-bold text-sm absolute -top-8 left-0 z-0">
+            <i class="fas fa-server mr-2 text-white/90"></i> MTD BAPP
+          </div>
+          <div class="grid grid-cols-1 xl:grid-cols-3 lg:grid-cols-3 gap-6 bg-transparent pt-2 relative z-10">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 col-span-1">
+              <div class="flex items-center mb-4"><div class="bg-blue-600 text-white rounded-full w-10 h-10 flex justify-center items-center mr-3 shadow-sm"><i class="fas fa-file-alt"></i></div><h3 class="font-extrabold text-[#1e3a8a] text-sm">BAPP CREATE (MTD)</h3></div>
+              <div class="grid grid-cols-4 gap-2 mb-4">
+                <div class="bg-blue-50/50 p-2 rounded-lg border border-blue-100 flex flex-col justify-center items-center text-center"><i class="fas fa-file-invoice text-blue-600 mb-1"></i><span class="text-[9px] text-gray-500 font-semibold mb-1">Total BAPP</span><span class="font-bold text-blue-700 text-xs" id="txtMtdBCreateTotalPerc">0%</span><span class="text-[12px] text-gray-700" id="txtMtdBCreateTotalVal">(0)</span></div>
+                <div class="bg-green-50/50 p-2 rounded-lg border border-green-100 flex flex-col justify-center items-center text-center"><i class="fas fa-check-circle text-green-500 mb-1"></i><span class="text-[9px] text-gray-500 font-semibold mb-1">On Time</span><span class="font-bold text-green-600 text-xs" id="txtMtdBCreateOnTimePerc">0%</span><span class="text-[12px] text-gray-700" id="txtMtdBCreateOnTimeVal">(0)</span></div>
+                <div class="bg-red-50/50 p-2 rounded-lg border border-red-100 flex flex-col justify-center items-center text-center"><i class="fas fa-exclamation-triangle text-red-500 mb-1"></i><span class="text-[9px] text-gray-500 font-semibold mb-1">Telat</span><span class="font-bold text-red-600 text-xs" id="txtMtdBCreateTelatPerc">0%</span><span class="text-[12px] text-gray-700" id="txtMtdBCreateTelatVal">(0)</span></div>
+                <div class="bg-yellow-50/50 p-2 rounded-lg border border-yellow-100 flex flex-col justify-center items-center text-center"><i class="fas fa-times-circle text-yellow-500 mb-1"></i><span class="text-[9px] text-gray-500 font-semibold mb-1">Open</span><span class="font-bold text-yellow-600 text-xs" id="txtMtdBCreateOpenPerc">0%</span><span class="text-[12px] text-gray-700" id="txtMtdBCreateOpenVal">(0)</span></div>
+              </div>
+              <div class="flex items-center justify-center space-x-3 text-[9px] text-gray-500 font-medium mb-2">
+                <span class="flex items-center"><span class="w-2.5 h-2.5 bg-[#1d4ed8] rounded-[2px] mr-1"></span> Total</span>
+                <span class="flex items-center"><span class="w-2.5 h-2.5 bg-[#10b981] rounded-[2px] mr-1"></span> On Time</span>
+                <span class="flex items-center"><span class="w-2.5 h-2.5 bg-[#ef4444] rounded-[2px] mr-1"></span> Telat</span>
+                <span class="flex items-center"><span class="w-2.5 h-2.5 bg-[#eab308] rounded-[2px] mr-1"></span> Open</span>
+              </div>
+              <div class="h-32 w-full"><canvas id="mtdBappCreateChart"></canvas></div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 col-span-1">
+              <div class="flex items-center mb-4"><div class="bg-blue-600 text-white rounded-full w-10 h-10 flex justify-center items-center mr-3 shadow-sm"><i class="fas fa-user-check"></i></div><h3 class="font-extrabold text-[#1e3a8a] text-sm">BAPP USER (MTD)</h3></div>
+              <div class="grid grid-cols-4 gap-2 mb-4">
+                <div class="bg-blue-50/50 p-2 rounded-lg border border-blue-100 flex flex-col justify-center items-center text-center"><i class="fas fa-file-invoice text-blue-600 mb-1"></i><span class="text-[9px] text-gray-500 font-semibold mb-1">Total BAPP</span><span class="font-bold text-blue-700 text-xs" id="txtMtdBUserTotalPerc">0%</span><span class="text-[12px] text-gray-700" id="txtMtdBUserTotalVal">(0)</span></div>
+                <div class="bg-green-50/50 p-2 rounded-lg border border-green-100 flex flex-col justify-center items-center text-center"><i class="fas fa-check-circle text-green-500 mb-1"></i><span class="text-[9px] text-gray-500 font-semibold mb-1">On Time</span><span class="font-bold text-green-600 text-xs" id="txtMtdBUserOnTimePerc">0%</span><span class="text-[12px] text-gray-700" id="txtMtdBUserOnTimeVal">(0)</span></div>
+                <div class="bg-red-50/50 p-2 rounded-lg border border-red-100 flex flex-col justify-center items-center text-center"><i class="fas fa-exclamation-triangle text-red-500 mb-1"></i><span class="text-[9px] text-gray-500 font-semibold mb-1">Telat</span><span class="font-bold text-red-600 text-xs" id="txtMtdBUserTelatPerc">0%</span><span class="text-[12px] text-gray-700" id="txtMtdBUserTelatVal">(0)</span></div>
+                <div class="bg-yellow-50/50 p-2 rounded-lg border border-yellow-100 flex flex-col justify-center items-center text-center"><i class="fas fa-times-circle text-yellow-500 mb-1"></i><span class="text-[9px] text-gray-500 font-semibold mb-1">Open</span><span class="font-bold text-yellow-600 text-xs" id="txtMtdBUserOpenPerc">0%</span><span class="text-[12px] text-gray-700" id="txtMtdBUserOpenVal">(0)</span></div>
+              </div>
+              <div class="flex items-center justify-center space-x-3 text-[9px] text-gray-500 font-medium mb-2">
+                <span class="flex items-center"><span class="w-2.5 h-2.5 bg-[#1d4ed8] rounded-[2px] mr-1"></span> Total</span>
+                <span class="flex items-center"><span class="w-2.5 h-2.5 bg-[#10b981] rounded-[2px] mr-1"></span> On Time</span>
+                <span class="flex items-center"><span class="w-2.5 h-2.5 bg-[#ef4444] rounded-[2px] mr-1"></span> Telat</span>
+                <span class="flex items-center"><span class="w-2.5 h-2.5 bg-[#eab308] rounded-[2px] mr-1"></span> Open</span>
+              </div>
+              <div class="h-32 w-full"><canvas id="mtdBappUserChart"></canvas></div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 col-span-1">
+              <div class="flex items-center mb-4"><div class="bg-purple-600 text-white rounded-full w-10 h-10 flex justify-center items-center mr-3 shadow-sm"><i class="fas fa-paper-plane"></i></div><h3 class="font-extrabold text-[#1e3a8a] text-sm">BAPP SENT TO UF (MTD)</h3></div>
+              <div class="grid grid-cols-4 gap-2 mb-4">
+                <div class="bg-blue-50/50 p-2 rounded-lg border border-blue-100 flex flex-col justify-center items-center text-center"><i class="fas fa-file-invoice text-blue-600 mb-1"></i><span class="text-[9px] text-gray-500 font-semibold mb-1">Total BAPP</span><span class="font-bold text-blue-700 text-xs" id="txtMtdBUfTotalPerc">0%</span><span class="text-[12px] text-gray-700" id="txtMtdBUfTotalVal">(0)</span></div>
+                <div class="bg-green-50/50 p-2 rounded-lg border border-green-100 flex flex-col justify-center items-center text-center"><i class="fas fa-check-circle text-green-500 mb-1"></i><span class="text-[9px] text-gray-500 font-semibold mb-1">On Time</span><span class="font-bold text-green-600 text-xs" id="txtMtdBUfOnTimePerc">0%</span><span class="text-[12px] text-gray-700" id="txtMtdBUfOnTimeVal">(0)</span></div>
+                <div class="bg-red-50/50 p-2 rounded-lg border border-red-100 flex flex-col justify-center items-center text-center"><i class="fas fa-exclamation-triangle text-red-500 mb-1"></i><span class="text-[9px] text-gray-500 font-semibold mb-1">Telat</span><span class="font-bold text-red-600 text-xs" id="txtMtdBUfTelatPerc">0%</span><span class="text-[12px] text-gray-700" id="txtMtdBUfTelatVal">(0)</span></div>
+                <div class="bg-yellow-50/50 p-2 rounded-lg border border-yellow-100 flex flex-col justify-center items-center text-center"><i class="fas fa-times-circle text-yellow-500 mb-1"></i><span class="text-[9px] text-gray-500 font-semibold mb-1">Open</span><span class="font-bold text-yellow-600 text-xs" id="txtMtdBUfOpenPerc">0%</span><span class="text-[12px] text-gray-700" id="txtMtdBUfOpenVal">(0)</span></div>
+              </div>
+              <div class="flex items-center justify-center space-x-3 text-[9px] text-gray-500 font-medium mb-2">
+                <span class="flex items-center"><span class="w-2.5 h-2.5 bg-[#1d4ed8] rounded-[2px] mr-1"></span> Total</span>
+                <span class="flex items-center"><span class="w-2.5 h-2.5 bg-[#10b981] rounded-[2px] mr-1"></span> On Time</span>
+                <span class="flex items-center"><span class="w-2.5 h-2.5 bg-[#ef4444] rounded-[2px] mr-1"></span> Telat</span>
+                <span class="flex items-center"><span class="w-2.5 h-2.5 bg-[#eab308] rounded-[2px] mr-1"></span> Open</span>
+              </div>
+              <div class="h-32 w-full"><canvas id="mtdBappUfChart"></canvas></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= YTD BAPP SECTION ================= -->
+        <div class="relative mt-8">
+          <div class="tab-badge-bapp-ytd text-white px-5 py-1.5 rounded-t-xl inline-flex items-center font-bold text-sm absolute -top-8 left-0 z-0">
+            <i class="fas fa-layer-group mr-2 text-white/90"></i> YTD BAPP
+          </div>
+          <div class="grid grid-cols-1 xl:grid-cols-3 lg:grid-cols-3 gap-6 bg-transparent pt-2 relative z-10">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 col-span-1">
+              <div class="flex items-center mb-4"><div class="bg-blue-600 text-white rounded-full w-10 h-10 flex justify-center items-center mr-3 shadow-sm"><i class="fas fa-file-alt"></i></div><h3 class="font-extrabold text-[#1e3a8a] text-sm">BAPP CREATE (YTD)</h3></div>
+              <div class="grid grid-cols-4 gap-2 mb-4">
+                <div class="bg-blue-50/50 p-2 rounded-lg border border-blue-100 flex flex-col justify-center items-center text-center"><i class="fas fa-file-invoice text-blue-600 mb-1"></i><span class="text-[9px] text-gray-500 font-semibold mb-1">Total BAPP</span><span class="font-bold text-blue-700 text-xs" id="txtYtdBCreateTotalPerc">0%</span><span class="text-[12px] text-gray-700" id="txtYtdBCreateTotalVal">(0)</span></div>
+                <div class="bg-green-50/50 p-2 rounded-lg border border-green-100 flex flex-col justify-center items-center text-center"><i class="fas fa-check-circle text-green-500 mb-1"></i><span class="text-[9px] text-gray-500 font-semibold mb-1">On Time</span><span class="font-bold text-green-600 text-xs" id="txtYtdBCreateOnTimePerc">0%</span><span class="text-[12px] text-gray-700" id="txtYtdBCreateOnTimeVal">(0)</span></div>
+                <div class="bg-red-50/50 p-2 rounded-lg border border-red-100 flex flex-col justify-center items-center text-center"><i class="fas fa-exclamation-triangle text-red-500 mb-1"></i><span class="text-[9px] text-gray-500 font-semibold mb-1">Telat</span><span class="font-bold text-red-600 text-xs" id="txtYtdBCreateTelatPerc">0%</span><span class="text-[12px] text-gray-700" id="txtYtdBCreateTelatVal">(0)</span></div>
+                <div class="bg-yellow-50/50 p-2 rounded-lg border border-yellow-100 flex flex-col justify-center items-center text-center"><i class="fas fa-times-circle text-yellow-500 mb-1"></i><span class="text-[9px] text-gray-500 font-semibold mb-1">Open</span><span class="font-bold text-yellow-600 text-xs" id="txtYtdBCreateOpenPerc">0%</span><span class="text-[12px] text-gray-700" id="txtYtdBCreateOpenVal">(0)</span></div>
+              </div>
+              <div class="flex items-center justify-center space-x-3 text-[9px] text-gray-500 font-medium mb-2">
+                <span class="flex items-center"><span class="w-2.5 h-2.5 bg-[#1d4ed8] rounded-[2px] mr-1"></span> Total</span>
+                <span class="flex items-center"><span class="w-2.5 h-[2px] bg-[#10b981] mr-1"></span> On Time</span>
+              </div>
+              <div class="h-32 w-full"><canvas id="ytdBappCreateChart"></canvas></div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 col-span-1">
+              <div class="flex items-center mb-4"><div class="bg-blue-600 text-white rounded-full w-10 h-10 flex justify-center items-center mr-3 shadow-sm"><i class="fas fa-user-check"></i></div><h3 class="font-extrabold text-[#1e3a8a] text-sm">BAPP USER (YTD)</h3></div>
+              <div class="grid grid-cols-4 gap-2 mb-4">
+                <div class="bg-blue-50/50 p-2 rounded-lg border border-blue-100 flex flex-col justify-center items-center text-center"><i class="fas fa-file-invoice text-blue-600 mb-1"></i><span class="text-[9px] text-gray-500 font-semibold mb-1">Total BAPP</span><span class="font-bold text-blue-700 text-xs" id="txtYtdBUserTotalPerc">0%</span><span class="text-[12px] text-gray-700" id="txtYtdBUserTotalVal">(0)</span></div>
+                <div class="bg-green-50/50 p-2 rounded-lg border border-green-100 flex flex-col justify-center items-center text-center"><i class="fas fa-check-circle text-green-500 mb-1"></i><span class="text-[9px] text-gray-500 font-semibold mb-1">On Time</span><span class="font-bold text-green-600 text-xs" id="txtYtdBUserOnTimePerc">0%</span><span class="text-[12px] text-gray-700" id="txtYtdBUserOnTimeVal">(0)</span></div>
+                <div class="bg-red-50/50 p-2 rounded-lg border border-red-100 flex flex-col justify-center items-center text-center"><i class="fas fa-exclamation-triangle text-red-500 mb-1"></i><span class="text-[9px] text-gray-500 font-semibold mb-1">Telat</span><span class="font-bold text-red-600 text-xs" id="txtYtdBUserTelatPerc">0%</span><span class="text-[12px] text-gray-700" id="txtYtdBUserTelatVal">(0)</span></div>
+                <div class="bg-yellow-50/50 p-2 rounded-lg border border-yellow-100 flex flex-col justify-center items-center text-center"><i class="fas fa-times-circle text-yellow-500 mb-1"></i><span class="text-[9px] text-gray-500 font-semibold mb-1">Open</span><span class="font-bold text-yellow-600 text-xs" id="txtYtdBUserOpenPerc">0%</span><span class="text-[12px] text-gray-700" id="txtYtdBUserOpenVal">(0)</span></div>
+              </div>
+              <div class="flex items-center justify-center space-x-3 text-[9px] text-gray-500 font-medium mb-2">
+                <span class="flex items-center"><span class="w-2.5 h-2.5 bg-[#1d4ed8] rounded-[2px] mr-1"></span> Total</span>
+                <span class="flex items-center"><span class="w-2.5 h-[2px] bg-[#10b981] mr-1"></span> On Time</span>
+              </div>
+              <div class="h-32 w-full"><canvas id="ytdBappUserChart"></canvas></div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 col-span-1">
+              <div class="flex items-center mb-4"><div class="bg-purple-600 text-white rounded-full w-10 h-10 flex justify-center items-center mr-3 shadow-sm"><i class="fas fa-paper-plane"></i></div><h3 class="font-extrabold text-[#1e3a8a] text-sm">BAPP SENT TO UF (YTD)</h3></div>
+              <div class="grid grid-cols-4 gap-2 mb-4">
+                <div class="bg-blue-50/50 p-2 rounded-lg border border-blue-100 flex flex-col justify-center items-center text-center"><i class="fas fa-file-invoice text-blue-600 mb-1"></i><span class="text-[9px] text-gray-500 font-semibold mb-1">Total BAPP</span><span class="font-bold text-blue-700 text-xs" id="txtYtdBUfTotalPerc">0%</span><span class="text-[12px] text-gray-700" id="txtYtdBUfTotalVal">(0)</span></div>
+                <div class="bg-green-50/50 p-2 rounded-lg border border-green-100 flex flex-col justify-center items-center text-center"><i class="fas fa-check-circle text-green-500 mb-1"></i><span class="text-[9px] text-gray-500 font-semibold mb-1">On Time</span><span class="font-bold text-green-600 text-xs" id="txtYtdBUfOnTimePerc">0%</span><span class="text-[12px] text-gray-700" id="txtYtdBUfOnTimeVal">(0)</span></div>
+                <div class="bg-red-50/50 p-2 rounded-lg border border-red-100 flex flex-col justify-center items-center text-center"><i class="fas fa-exclamation-triangle text-red-500 mb-1"></i><span class="text-[9px] text-gray-500 font-semibold mb-1">Telat</span><span class="font-bold text-red-600 text-xs" id="txtYtdBUfTelatPerc">0%</span><span class="text-[12px] text-gray-700" id="txtYtdBUfTelatVal">(0)</span></div>
+                <div class="bg-yellow-50/50 p-2 rounded-lg border border-yellow-100 flex flex-col justify-center items-center text-center"><i class="fas fa-times-circle text-yellow-500 mb-1"></i><span class="text-[9px] text-gray-500 font-semibold mb-1">Open</span><span class="font-bold text-yellow-600 text-xs" id="txtYtdBUfOpenPerc">0%</span><span class="text-[12px] text-gray-700" id="txtYtdBUfOpenVal">(0)</span></div>
+              </div>
+              <div class="flex items-center justify-center space-x-3 text-[9px] text-gray-500 font-medium mb-2">
+                <span class="flex items-center"><span class="w-2.5 h-2.5 bg-[#1d4ed8] rounded-[2px] mr-1"></span> Total</span>
+                <span class="flex items-center"><span class="w-2.5 h-[2px] bg-[#10b981] mr-1"></span> On Time</span>
+              </div>
+              <div class="h-32 w-full"><canvas id="ytdBappUfChart"></canvas></div>
+            </div>
+            
+          </div>
+        </div>
+
+        <!-- ================= ISSUES & ACTIONS SECTION ================= -->
+        <div class="relative mt-10 mb-8">
+          <div class="tab-badge-issue text-white px-5 py-1.5 rounded-t-xl inline-flex items-center font-bold text-sm absolute -top-8 left-0 z-0">
+            <i class="fas fa-clipboard-list mr-2 text-white/90"></i> HIGHLIGHT ISSUES & ACTIONS
+          </div>
+
+          <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative z-10">
+            <!-- Navigation Pagination -->
+            <div class="flex justify-between items-center mb-6 pb-3 border-b border-gray-100">
+                <span class="text-sm font-bold text-gray-700" id="issueCounter">Menampilkan 0 dari 0 Issue</span>
+                <div class="flex space-x-2">
+                    <button id="btnPrevIssue" class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1.5 rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                        <i class="fas fa-chevron-left mr-1"></i> Prev
+                    </button>
+                    <button id="btnNextIssue" class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1.5 rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                        Next <i class="fas fa-chevron-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content Container -->
+            <div id="issueContainer" class="space-y-5">
+                <!-- Tampilan Card akan diisi oleh JavaScript -->
+            </div>
+            
+            <div id="noIssueData" class="text-center py-12 text-gray-400 hidden">
+                <i class="fas fa-inbox text-5xl mb-4 opacity-40"></i>
+                <p class="font-medium text-sm">Tidak ada data respons issue untuk filter yang dipilih.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // --- 0. LOGIKA TOGGLE SIDEBAR ---
+    document.getElementById('toggleSidebarBtn').addEventListener('click', function() {
+      const sidebar = document.getElementById('sidebar');
+      const logo = document.getElementById('sidebarLogo');
+      const footer = document.getElementById('sidebarFooter');
+      const menuTexts = document.querySelectorAll('.sidebar-text');
+      
+      if (sidebar.classList.contains('w-64')) {
+        sidebar.classList.remove('w-64'); sidebar.classList.add('w-20');
+        logo.style.opacity = '0'; footer.style.opacity = '0';
+        setTimeout(() => { logo.classList.add('hidden'); footer.classList.add('hidden'); }, 200);
+        menuTexts.forEach(text => text.classList.add('hidden'));
+        document.getElementById('toggleSidebarBtn').classList.add('mx-auto');
+      } else {
+        sidebar.classList.remove('w-20'); sidebar.classList.add('w-64');
+        logo.classList.remove('hidden'); footer.classList.remove('hidden');
+        setTimeout(() => { logo.style.opacity = '1'; footer.style.opacity = '1'; }, 50);
+        menuTexts.forEach(text => text.classList.remove('hidden'));
+        document.getElementById('toggleSidebarBtn').classList.remove('mx-auto');
+      }
+    });
+
+    // --- 1. CHART INITIALIZATION ---
+    const getChartOptions = (tipe) => {
+      return {
+        responsive: true, 
+        maintainAspectRatio: false, 
+        plugins: { legend: { display: false } },
+        scales: { 
+          x: { 
+            grid: { display: false }, 
+            ticks: { font: { size: 9 }, color: '#94a3b8' }, 
+            border: { display: false } 
+          }, 
+          y: { 
+            grid: { color: '#f1f5f9' }, 
+            ticks: { 
+              font: { size: 9 }, 
+              color: '#94a3b8',
+              callback: function(value) {
+                if (tipe === 'persen') {
+                  return (value * 100).toFixed(0) + '%';
+                } else {
+                  if (value >= 1e12) return (value / 1e12) + 'T';   
+                  if (value >= 1e9) return (value / 1e9) + 'M';     
+                  if (value >= 1e6) return (value / 1e6) + 'Jt';    
+                  if (value >= 1e3) return (value / 1e3) + 'K';     
+                  return value;
+                }
+              }
+            }, 
+            border: { display: false } 
+          } 
+        }
+      };
+    };
+
+    const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+
+    const createBarChart = (id, colorPlan, colorActual, isYtd = false, tipe = 'uang') => {
+      let datasets = [
+        { type: 'bar', label: 'Plan', data: [], backgroundColor: colorPlan, barPercentage: 0.7, borderRadius: 2, order: 2 }
+      ];
+      
+      if (isYtd) {
+        datasets.push({ type: 'line', label: 'Actual', data: [], borderColor: '#c084fc', borderWidth: 2.5, fill: false, tension: 0.4, pointRadius: 2, pointBackgroundColor: '#c084fc', order: 1 });
+      } else {
+        datasets.push({ type: 'bar', label: 'Actual', data: [], backgroundColor: colorActual, barPercentage: 0.7, borderRadius: 2, order: 2 });
+      }
+      return new Chart(document.getElementById(id).getContext('2d'), { type: 'bar', data: { labels: labels, datasets: datasets }, options: getChartOptions(tipe) });
+    };
+
+    const createBappChart = (id, addTrend = false) => {
+      let datasets = [
+        { type: 'bar', label: 'Total', data: [], backgroundColor: '#1d4ed8', barPercentage: 0.8, categoryPercentage: 0.8, borderRadius: 1, order: 2 }
+      ];
+      
+      // Jika grafik MTD (tanpa trend), tambahkan bar On Time
+      if (!addTrend) {
+        datasets.push({ type: 'bar', label: 'OnTime', data: [], backgroundColor: '#10b981', barPercentage: 0.8, categoryPercentage: 0.8, borderRadius: 1, order: 2 });
+      }
+
+      // Bar Telat & Open tetap ada di MTD maupun YTD
+      datasets.push(
+        { type: 'bar', label: 'Telat', data: [], backgroundColor: '#ef4444', barPercentage: 0.8, categoryPercentage: 0.8, borderRadius: 1, order: 2 },
+        { type: 'bar', label: 'Open', data: [], backgroundColor: '#eab308', barPercentage: 0.8, categoryPercentage: 0.8, borderRadius: 1, order: 2 }
+      );
+
+      if(addTrend) {
+        // Tambahkan Line chart On Time untuk YTD
+        datasets.push({ type: 'line', label: 'Trend On Time', data: [], borderColor: '#10b981', borderWidth: 2.5, fill: false, tension: 0.4, pointRadius: 2, pointBackgroundColor: '#10b981', order: 1 });
+      }
+      return new Chart(document.getElementById(id).getContext('2d'), { type: 'bar', data: { labels: labels, datasets: datasets }, options: getChartOptions('angka') });
+    };
+
+    let mtdRevChart = createBarChart('mtdRevenueChart', '#9333ea', '#c084fc', false, 'uang');
+    let mtdCostChart = createBarChart('mtdCostChart', '#9333ea', '#c084fc', false, 'uang');
+    let mtdGpmChart = createBarChart('mtdGpmChart', '#9333ea', '#c084fc', false, 'persen');
+    
+    let ytdRevChart = createBarChart('ytdRevenueChart', '#9333ea', '#c084fc', true, 'uang');
+    let ytdCostChart = createBarChart('ytdCostChart', '#9333ea', '#c084fc', true, 'uang');
+    let ytdGpmChart = createBarChart('ytdGpmChart', '#9333ea', '#c084fc', true, 'persen');
+
+    let mtdBappCreateChart = createBappChart('mtdBappCreateChart', false);
+    let mtdBappUserChart = createBappChart('mtdBappUserChart', false);
+    let mtdBappUfChart = createBappChart('mtdBappUfChart', false);
+
+    let ytdBappCreateChart = createBappChart('ytdBappCreateChart', true);
+    let ytdBappUserChart = createBappChart('ytdBappUserChart', true);
+    let ytdBappUfChart = createBappChart('ytdBappUfChart', true);
+
+    // --- 2. GLOBAL VARIABLES ---
+    let globalDataMonthly = [];
+    let globalDataBapp = [];
+    let globalDataForm = [];
+    let filteredIssues = [];
+    let currentIssueIndex = 0;
+    
+    let isInitialLoad = true; 
+    let tsYear, tsMonth, tsOprep, tsCustomer, tsProject;
+
+    // --- 3. FILTER POPULATE ---
+    function populateFilters(data) {
+      const years = new Set(), months = new Set(), opreps = new Set(), customers = new Set(), projects = new Set();
+      data.forEach(row => {
+        if(row['Year']) years.add(row['Year']); if(row['Month']) months.add(row['Month']);
+        if(row['Oprep']) opreps.add(row['Oprep']); if(row['Customer']) customers.add(row['Customer']);
+        if(row['Project Code']) projects.add(row['Project Code']); 
+      });
+      const buildOptions = (set, defaultText) => {
+        let html = `<option value="All">${defaultText}</option>`;
+        Array.from(set).sort().forEach(item => html += `<option value="${item}">${item}</option>`);
+        return html;
+      };
+      
+      if (tsYear) tsYear.destroy();
+      if (tsMonth) tsMonth.destroy();
+      if (tsOprep) tsOprep.destroy();
+      if (tsCustomer) tsCustomer.destroy();
+      if (tsProject) tsProject.destroy();
+
+      document.getElementById('filterYear').innerHTML = buildOptions(years, 'All Year');
+      document.getElementById('filterOprep').innerHTML = buildOptions(opreps, 'All Oprep');
+      document.getElementById('filterCustomer').innerHTML = buildOptions(customers, 'All Customer');
+      if(projects.size > 0 && document.getElementById('filterProject')) document.getElementById('filterProject').innerHTML = buildOptions(projects, 'All Project Code');
+
+      const monthOrder = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+      const sortedMonths = Array.from(months).sort((a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
+      let htmlMonth = `<option value="All">All Month</option>`;
+      sortedMonths.forEach(m => htmlMonth += `<option value="${m}">${m}</option>`);
+      document.getElementById('filterMonth').innerHTML = htmlMonth;
+
+      const tsConfig = { create: false, sortField: false, maxOptions: null };
+      tsYear = new TomSelect('#filterYear', tsConfig);
+      tsMonth = new TomSelect('#filterMonth', tsConfig);
+      tsOprep = new TomSelect('#filterOprep', tsConfig);
+      tsCustomer = new TomSelect('#filterCustomer', tsConfig);
+      if(document.getElementById('filterProject')) tsProject = new TomSelect('#filterProject', tsConfig);
+    }
+
+    // --- 4. DATA CALCULATION ---
+    function calculateDataAgregates(dataFiltered) {
+      let planArr = Array(12).fill(0), actArr = Array(12).fill(0), costPArr = Array(12).fill(0), costAArr = Array(12).fill(0);
+      let gpmPArr = Array(12).fill(0), gpmAArr = Array(12).fill(0);
+      let gpmRkapArr = Array(12).fill(0), gpmRkapCountArr = Array(12).fill(0);
+      let totals = { rP: 0, rA: 0, cP: 0, cA: 0, gP: 0, gA: 0, gRkap: 0, count: 0 };
+      let rkapTotalSum = 0, rkapTotalCount = 0;
+      const namaBulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+      dataFiltered.forEach(row => {
+        let idxBulan = namaBulan.indexOf(row['Month']);
+        let rP = parseFloat(row['Plan Revenue']) || 0, rA = parseFloat(row['Actual Revenue']) || 0;
+        let cP = parseFloat(row['Plan Budget']) || 0, cA = parseFloat(row['Actual Budget']) || 0;
+        let gRkap = parseFloat(row['GPM Standart']);
+
+        if(idxBulan !== -1) {
+          planArr[idxBulan] += rP; actArr[idxBulan] += rA; costPArr[idxBulan] += cP; costAArr[idxBulan] += cA; 
+          if (!isNaN(gRkap)) {
+            gpmRkapArr[idxBulan] += gRkap;
+            gpmRkapCountArr[idxBulan]++;
+          }
+        }
+        totals.rP += rP; totals.rA += rA; totals.cP += cP; totals.cA += cA; totals.count++;
+        
+        if (!isNaN(gRkap)) {
+            rkapTotalSum += gRkap;
+            rkapTotalCount++;
+        }
+      });
+
+      for(let i = 0; i < 12; i++) {
+        gpmPArr[i] = planArr[i] > 0 ? (planArr[i] - costPArr[i]) / planArr[i] : 0;
+        gpmAArr[i] = actArr[i] > 0 ? (actArr[i] - costAArr[i]) / actArr[i] : 0;
+        if(gpmRkapCountArr[i] > 0) gpmRkapArr[i] = gpmRkapArr[i] / gpmRkapCountArr[i];
+      }
+      totals.gP = totals.rP > 0 ? (totals.rP - totals.cP) / totals.rP : 0;
+      totals.gA = totals.rA > 0 ? (totals.rA - totals.cA) / totals.rA : 0;
+      totals.gRkap = rkapTotalCount > 0 ? rkapTotalSum / rkapTotalCount : 0;
+
+      return { planArr, actArr, costPArr, costAArr, gpmPArr, gpmAArr, gpmRkapArr, totals };
+    }
+
+    function calculateBappAggregates(dataBappFiltered) {
+      let create = { totArr: Array(12).fill(0), onArr: Array(12).fill(0), telArr: Array(12).fill(0), opArr: Array(12).fill(0), tot:0, on:0, tel:0, op:0 };
+      let user = { totArr: Array(12).fill(0), onArr: Array(12).fill(0), telArr: Array(12).fill(0), opArr: Array(12).fill(0), tot:0, on:0, tel:0, op:0 };
+      let uf = { totArr: Array(12).fill(0), onArr: Array(12).fill(0), telArr: Array(12).fill(0), opArr: Array(12).fill(0), tot:0, on:0, tel:0, op:0 };
+      const namaBulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+      dataBappFiltered.forEach(row => {
+        let idxBulan = namaBulan.indexOf(row['Month']);
+        if(idxBulan !== -1) {
+          let totBapp = parseFloat(row['Total BAPP']) || 0;
+          let cOn = parseFloat(row['Create BAPP Tidak Telat']) || 0, cTel = parseFloat(row['Create BAPP Telat']) || 0, cOp = parseFloat(row['Create BAPP Open']) || 0;
+          create.totArr[idxBulan] += totBapp; create.onArr[idxBulan] += cOn; create.telArr[idxBulan] += cTel; create.opArr[idxBulan] += cOp;
+          create.tot += totBapp; create.on += cOn; create.tel += cTel; create.op += cOp;
+
+          let uOn = parseFloat(row['Sent User Tidak Telat']) || 0, uTel = parseFloat(row['Sent User Telat']) || 0, uOp = parseFloat(row['Sent User Open']) || 0;
+          user.totArr[idxBulan] += totBapp; user.onArr[idxBulan] += uOn; user.telArr[idxBulan] += uTel; user.opArr[idxBulan] += uOp;
+          user.tot += totBapp; user.on += uOn; user.tel += uTel; user.op += uOp;
+
+          let ufOn = parseFloat(row['Sent UF Tidak Telat']) || 0, ufTel = parseFloat(row['Sent UF Telat']) || 0, ufOp = parseFloat(row['Sent UF Open']) || 0;
+          uf.totArr[idxBulan] += totBapp; uf.onArr[idxBulan] += ufOn; uf.telArr[idxBulan] += ufTel; uf.opArr[idxBulan] += ufOp;
+          uf.tot += totBapp; uf.on += ufOn; uf.tel += ufTel; uf.op += ufOp; 
+        }
+      });
+      return { create, user, uf };
+    }
+
+    // --- 5. RENDER ISSUES LOGIC ---
+    function renderCurrentIssue() {
+      const container = document.getElementById('issueContainer');
+      const noData = document.getElementById('noIssueData');
+      const counter = document.getElementById('issueCounter');
+      const btnPrev = document.getElementById('btnPrevIssue');
+      const btnNext = document.getElementById('btnNextIssue');
+
+      if(filteredIssues.length === 0) {
+        container.innerHTML = '';
+        container.classList.add('hidden');
+        noData.classList.remove('hidden');
+        counter.innerText = 'Menampilkan 0 dari 0 Issue';
+        btnPrev.disabled = true; btnNext.disabled = true;
+        return;
+      }
+
+      container.classList.remove('hidden');
+      noData.classList.add('hidden');
+      counter.innerText = `Menampilkan ${currentIssueIndex + 1} dari ${filteredIssues.length} Issue`;
+      
+      btnPrev.disabled = currentIssueIndex === 0;
+      btnNext.disabled = currentIssueIndex === filteredIssues.length - 1;
+
+      const row = filteredIssues[currentIssueIndex];
+      const formatText = (text) => text ? String(text).replace(/\n/g, '<br>') : '-';
+      
+      const formatEvidence = (link) => {
+        if(!link || String(link).trim() === '') {
+          return `<div class="w-full h-full min-h-[140px] rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50"><span class="text-[11px] text-gray-400 font-medium">Belum ada Evidence</span></div>`;
+        }
+        let url = String(link).trim();
+        let isImg = url.match(/\.(jpeg|jpg|gif|png)$/i) != null || url.includes('thumbnail?id=');
+        
+        if(isImg) {
+          return `<a href="${url}" target="_blank" class="block w-full h-full min-h-[140px] rounded-lg overflow-hidden border border-gray-200 relative group shadow-sm bg-gray-100 flex items-center justify-center">
+                    <img src="${url}" alt="Evidence" class="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-300">
+                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300"><i class="fas fa-external-link-alt text-white text-2xl"></i></div>
+                  </a>`;
+        } else {
+          return `<a href="${url}" target="_blank" class="block w-full h-full min-h-[140px] bg-white rounded-lg border border-gray-200 flex flex-col items-center justify-center hover:border-blue-400 hover:shadow-md transition-all group">
+                    <div class="w-12 h-12 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-2 group-hover:bg-blue-500 group-hover:text-white transition-colors"><i class="fas fa-link text-xl"></i></div>
+                    <span class="text-xs text-gray-500 font-medium group-hover:text-blue-600">Lihat Lampiran</span>
+                  </a>`;
+        }
+      };
+
+      const createCard = (title, icon, bgColor, bdColor, txtColor, textData, imgData) => `
+        <div class="flex flex-col md:flex-row bg-gradient-to-r ${bgColor} border ${bdColor} rounded-xl overflow-hidden shadow-sm">
+          <div class="w-full md:w-2/3 p-5 flex flex-col">
+            <div class="${txtColor} text-[10px] font-bold px-3 py-1 rounded bg-white/60 border ${bdColor} self-start mb-3 uppercase tracking-wide flex items-center"><i class="${icon} mr-1.5"></i> ${title}</div>
+            <div class="text-xs text-gray-700 leading-relaxed flex-1 max-h-48 overflow-y-auto custom-scrollbar pr-3">
+              ${formatText(textData)}
+            </div>
+          </div>
+          <div class="w-full md:w-1/3 bg-white/50 border-t md:border-t-0 md:border-l ${bdColor} p-4 relative flex flex-col">
+            <span class="text-[10px] font-bold text-gray-500 uppercase mb-2 ml-1">Evidence</span>
+            <div class="flex-1">${formatEvidence(imgData)}</div>
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = `
+        <div class="flex flex-col space-y-4">
+          ${createCard('Highlight Issue', 'fas fa-exclamation-circle', 'from-blue-50 to-blue-50/20', 'border-blue-100', 'text-blue-700', row['Highlight Issue'], row['Evidence Highlight Issue'])}
+          ${createCard('Corrective Action', 'fas fa-tools', 'from-emerald-50 to-emerald-50/20', 'border-emerald-100', 'text-emerald-700', row['Corrective Action'], row['Evidence Corrective Action'])}
+          ${createCard('Improvement', 'fas fa-lightbulb', 'from-purple-50 to-purple-50/20', 'border-purple-100', 'text-purple-700', row['Improvement'], row['Evidence Improvement'])}
+        </div>
+      `;
+    }
+
+    document.getElementById('btnPrevIssue').addEventListener('click', () => {
+      if (currentIssueIndex > 0) { currentIssueIndex--; renderCurrentIssue(); }
+    });
+    
+    document.getElementById('btnNextIssue').addEventListener('click', () => {
+      if (currentIssueIndex < filteredIssues.length - 1) { currentIssueIndex++; renderCurrentIssue(); }
+    });
+
+    // --- 6. UPDATE UI & FILTER APLIKASI ---
+    function updateDashboardUI() {
+      const valYear = document.getElementById('filterYear').value;
+      const valMonth = document.getElementById('filterMonth').value;
+      const valOprep = document.getElementById('filterOprep').value;
+      const valCustomer = document.getElementById('filterCustomer').value;
+      const valProject = document.getElementById('filterProject') ? document.getElementById('filterProject').value : 'All';
+
+      const dataMTD = globalDataMonthly.filter(row => {
+        return (valYear === 'All' || row['Year'] == valYear) && (valMonth === 'All' || row['Month'] == valMonth) &&
+               (valOprep === 'All' || row['Oprep'] == valOprep) && (valCustomer === 'All' || row['Customer'] == valCustomer) &&
+               (valProject === 'All' || !row['Project Code'] || row['Project Code'] == valProject);
+      });
+      const dataYTD = globalDataMonthly.filter(row => {
+        return (valYear === 'All' || row['Year'] == valYear) && (valOprep === 'All' || row['Oprep'] == valOprep) &&
+               (valCustomer === 'All' || row['Customer'] == valCustomer) && (valProject === 'All' || !row['Project Code'] || row['Project Code'] == valProject);
+      });
+
+      const dataMtdBapp = globalDataBapp.filter(row => {
+        return (valYear === 'All' || row['Year'] == valYear) && (valMonth === 'All' || row['Month'] == valMonth) &&
+               (valOprep === 'All' || row['Oprep'] == valOprep) && (valCustomer === 'All' || row['Customer'] == valCustomer);
+      });
+      const dataYtdBapp = globalDataBapp.filter(row => {
+        return (valYear === 'All' || row['Year'] == valYear) && (valOprep === 'All' || row['Oprep'] == valOprep) &&
+               (valCustomer === 'All' || row['Customer'] == valCustomer); 
+      });
+
+      filteredIssues = globalDataForm.filter(row => {
+        return (valYear === 'All' || row['Year'] == valYear) && 
+               (valMonth === 'All' || row['Month'] == valMonth) &&
+               (valOprep === 'All' || row['Oprep'] == valOprep) && 
+               (valCustomer === 'All' || row['Customer'] == valCustomer);
+      });
+      
+      if(!isInitialLoad) currentIssueIndex = 0; 
+      renderCurrentIssue();
+
+      let notesRev = new Set(), notesCost = new Set(), notesGpm = new Set();
+      dataMTD.forEach(row => {
+        if(row['1'] && String(row['1']).trim() !== '') notesRev.add(String(row['1']));
+        if(row['2'] && String(row['2']).trim() !== '') notesCost.add(String(row['2']));
+        if(row['4'] && String(row['4']).trim() !== '') notesGpm.add(String(row['4'])); 
+      });
+      document.getElementById('noteMtdRevenue').innerHTML = Array.from(notesRev).join('<br><br>') || '-';
+      document.getElementById('noteMtdCost').innerHTML = Array.from(notesCost).join('<br><br>') || '-';
+      document.getElementById('noteMtdGpm').innerHTML = Array.from(notesGpm).join('<br><br>') || '-';
+
+      const mtd = calculateDataAgregates(dataMTD);
+      const ytd = calculateDataAgregates(dataYTD);
+
+      // --- LOGIKA FILTER LABELS KHUSUS UNTUK MTD ---
+      const namaBulanMap = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+      let mIdx = valMonth === 'All' ? -1 : namaBulanMap.indexOf(valMonth);
+      const filterArrayForMtd = (arr) => mIdx === -1 ? arr : [arr[mIdx]];
+      const mtdLabels = mIdx === -1 ? labels : [labels[mIdx]];
+      
+      // Update grafik MTD
+      mtdRevChart.data.labels = mtdLabels;
+      mtdRevChart.data.datasets[0].data = filterArrayForMtd(mtd.planArr); 
+      mtdRevChart.data.datasets[1].data = filterArrayForMtd(mtd.actArr); 
+      mtdRevChart.update();
+      
+      mtdCostChart.data.labels = mtdLabels;
+      mtdCostChart.data.datasets[0].data = filterArrayForMtd(mtd.costPArr); 
+      mtdCostChart.data.datasets[1].data = filterArrayForMtd(mtd.costAArr); 
+      mtdCostChart.update();
+      
+      mtdGpmChart.data.labels = mtdLabels;
+      mtdGpmChart.data.datasets[0].data = filterArrayForMtd(mtd.gpmPArr); 
+      mtdGpmChart.data.datasets[1].data = filterArrayForMtd(mtd.gpmAArr); 
+      mtdGpmChart.update();
+
+      // Update grafik YTD
+      ytdRevChart.data.datasets[0].data = ytd.planArr; 
+      ytdRevChart.data.datasets[1].data = ytd.actArr; 
+      ytdRevChart.update();
+      
+      ytdCostChart.data.datasets[0].data = ytd.costPArr; 
+      ytdCostChart.data.datasets[1].data = ytd.costAArr; 
+      ytdCostChart.update();
+      
+      ytdGpmChart.data.datasets[0].data = ytd.gpmPArr; 
+      ytdGpmChart.data.datasets[1].data = ytd.gpmAArr; 
+      ytdGpmChart.update();
+
+      const formatRp = (num) => 'Rp' + num.toLocaleString('id-ID', { maximumFractionDigits: 0 });
+      const formatPerc = (num) => (num * 100).toFixed(2) + '%'; 
+      const hitungVsPlan = (actual, plan) => plan === 0 ? 0 : (actual / plan) * 100;
+      
+      const setCardValues = (prefix, totalsData) => {
+        document.getElementById(`txt${prefix}RevPlan`).innerText = formatRp(totalsData.rP); 
+        document.getElementById(`txt${prefix}RevActual`).innerText = formatRp(totalsData.rA);
+        document.getElementById(`txt${prefix}CostPlan`).innerText = formatRp(totalsData.cP); 
+        document.getElementById(`txt${prefix}CostActual`).innerText = formatRp(totalsData.cA);
+        
+        document.getElementById(`txt${prefix}GpmPlan`).innerText = formatPerc(totalsData.gP); 
+        document.getElementById(`txt${prefix}GpmActual`).innerText = formatPerc(totalsData.gA);
+        
+        if (document.getElementById(`txt${prefix}GpmRkap`)) {
+            document.getElementById(`txt${prefix}GpmRkap`).innerText = formatPerc(totalsData.gRkap);
+        }
+        
+        const renderVsArrow = (elementId, value, isGoodIfHigher, labelText = "vs Plan") => {
+          let el = document.getElementById(elementId);
+          if (!el) return;
+          let colorClass = value >= 100 ? (isGoodIfHigher ? 'text-green-500' : 'text-red-500') : (isGoodIfHigher ? 'text-red-500' : 'text-green-500');
+          let iconClass = value >= 100 ? 'fas fa-arrow-up' : 'fas fa-arrow-down';
+          el.className = `${colorClass} font-bold text-[14px] leading-none`;
+          el.innerHTML = `<i class="${iconClass} mr-1"></i>${value.toFixed(2)}% <span class="text-gray-400 font-normal text-[9px] ml-1">${labelText}</span>`;
+        };
+        
+        renderVsArrow(`txt${prefix}RevPerc`, hitungVsPlan(totalsData.rA, totalsData.rP), true, "vs Plan");
+        renderVsArrow(`txt${prefix}CostPerc`, hitungVsPlan(totalsData.cA, totalsData.cP), false, "vs Plan"); 
+        renderVsArrow(`txt${prefix}GpmPerc`, hitungVsPlan(totalsData.gA, totalsData.gP), true, "vs Plan");
+        
+        if (document.getElementById(`txt${prefix}GpmPercRkap`)) {
+            renderVsArrow(`txt${prefix}GpmPercRkap`, hitungVsPlan(totalsData.gA, totalsData.gRkap), true, "vs RKAP");
+        }
+      };
+      setCardValues('Mtd', mtd.totals); setCardValues('Ytd', ytd.totals);
+
+      const mtdBappAggr = calculateBappAggregates(dataMtdBapp);
+      const ytdBappAggr = calculateBappAggregates(dataYtdBapp);
+
+      // --- Update grafik MTD BAPP ---
+      mtdBappCreateChart.data.labels = mtdLabels;
+      mtdBappCreateChart.data.datasets[0].data = filterArrayForMtd(mtdBappAggr.create.totArr); 
+      mtdBappCreateChart.data.datasets[1].data = filterArrayForMtd(mtdBappAggr.create.onArr); 
+      mtdBappCreateChart.data.datasets[2].data = filterArrayForMtd(mtdBappAggr.create.telArr); 
+      mtdBappCreateChart.data.datasets[3].data = filterArrayForMtd(mtdBappAggr.create.opArr); 
+      mtdBappCreateChart.update();
+      
+      mtdBappUserChart.data.labels = mtdLabels;
+      mtdBappUserChart.data.datasets[0].data = filterArrayForMtd(mtdBappAggr.user.totArr); 
+      mtdBappUserChart.data.datasets[1].data = filterArrayForMtd(mtdBappAggr.user.onArr); 
+      mtdBappUserChart.data.datasets[2].data = filterArrayForMtd(mtdBappAggr.user.telArr); 
+      mtdBappUserChart.data.datasets[3].data = filterArrayForMtd(mtdBappAggr.user.opArr); 
+      mtdBappUserChart.update();
+      
+      mtdBappUfChart.data.labels = mtdLabels;
+      mtdBappUfChart.data.datasets[0].data = filterArrayForMtd(mtdBappAggr.uf.totArr); 
+      mtdBappUfChart.data.datasets[1].data = filterArrayForMtd(mtdBappAggr.uf.onArr); 
+      mtdBappUfChart.data.datasets[2].data = filterArrayForMtd(mtdBappAggr.uf.telArr); 
+      mtdBappUfChart.data.datasets[3].data = filterArrayForMtd(mtdBappAggr.uf.opArr); 
+      mtdBappUfChart.update();
+
+      // --- Update grafik YTD BAPP ---
+      ytdBappCreateChart.data.datasets[0].data = ytdBappAggr.create.totArr; 
+      ytdBappCreateChart.data.datasets[1].data = ytdBappAggr.create.telArr; 
+      ytdBappCreateChart.data.datasets[2].data = ytdBappAggr.create.opArr; 
+      ytdBappCreateChart.data.datasets[3].data = ytdBappAggr.create.onArr; 
+      ytdBappCreateChart.update();
+      
+      ytdBappUserChart.data.datasets[0].data = ytdBappAggr.user.totArr; 
+      ytdBappUserChart.data.datasets[1].data = ytdBappAggr.user.telArr; 
+      ytdBappUserChart.data.datasets[2].data = ytdBappAggr.user.opArr; 
+      ytdBappUserChart.data.datasets[3].data = ytdBappAggr.user.onArr; 
+      ytdBappUserChart.update();
+      
+      ytdBappUfChart.data.datasets[0].data = ytdBappAggr.uf.totArr; 
+      ytdBappUfChart.data.datasets[1].data = ytdBappAggr.uf.telArr; 
+      ytdBappUfChart.data.datasets[2].data = ytdBappAggr.uf.opArr; 
+      ytdBappUfChart.data.datasets[3].data = ytdBappAggr.uf.onArr; 
+      ytdBappUfChart.update();
+
+      const setBappText = (prefix, dataObj) => {
+        const perc = (val, total) => total === 0 ? "0,00%" : ((val / total) * 100).toFixed(2).replace('.', ',') + "%";
+        const fmtNum = (num) => '(' + num.toLocaleString('id-ID') + ')';
+        document.getElementById(`txt${prefix}TotalPerc`).innerText = dataObj.tot > 0 ? "100,00%" : "0,00%"; document.getElementById(`txt${prefix}TotalVal`).innerText = fmtNum(dataObj.tot);
+        document.getElementById(`txt${prefix}OnTimePerc`).innerText = perc(dataObj.on, dataObj.tot); document.getElementById(`txt${prefix}OnTimeVal`).innerText = fmtNum(dataObj.on);
+        document.getElementById(`txt${prefix}TelatPerc`).innerText = perc(dataObj.tel, dataObj.tot); document.getElementById(`txt${prefix}TelatVal`).innerText = fmtNum(dataObj.tel);
+        document.getElementById(`txt${prefix}OpenPerc`).innerText = perc(dataObj.op, dataObj.tot); document.getElementById(`txt${prefix}OpenVal`).innerText = fmtNum(dataObj.op);
+      }
+      
+      setBappText('MtdBCreate', mtdBappAggr.create); setBappText('MtdBUser', mtdBappAggr.user); setBappText('MtdBUf', mtdBappAggr.uf);
+      setBappText('YtdBCreate', ytdBappAggr.create); setBappText('YtdBUser', ytdBappAggr.user); setBappText('YtdBUf', ytdBappAggr.uf);
+    }
+
+    // --- 7. AUTO DATA LOAD & UPDATE TIMESTAMP ---
+    function updateTimestampText() {
+        const now = new Date();
+        const options = { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+        document.getElementById('lastUpdateTime').innerText = now.toLocaleDateString('en-GB', options).replace(/,/g, '');
+    }
+
+    function fetchDashboardData() {
+        google.script.run.withSuccessHandler(function(response) {
+            if(document.getElementById('loading')) document.getElementById('loading').style.display = 'none';
+            document.getElementById('dashboardContent').style.display = 'block';
+            
+            if(response.status === 'success') {
+                globalDataMonthly = response.dataMonthly || response.data || [];
+                globalDataBapp = response.dataBapp || [];
+                globalDataForm = response.dataForm || [];
+                
+                if(isInitialLoad) {
+                    populateFilters(globalDataMonthly); 
+                    isInitialLoad = false;
+                }
+                
+                updateDashboardUI(); 
+                updateTimestampText();
+            } else { 
+                console.error("Error: " + response.message); 
+            }
+        }).getDashboardData();
+    }
+
+    fetchDashboardData();
+    setInterval(fetchDashboardData, 15000);
+
+    // --- 8. APPLY FILTER BUTTON ---
+    document.getElementById('btnTerapkan').addEventListener('click', updateDashboardUI);
+  </script>
+</body>
+</html>
