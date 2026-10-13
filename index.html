@@ -932,27 +932,37 @@
         document.getElementById('lastUpdateTime').innerText = now.toLocaleDateString('en-GB', options).replace(/,/g, '');
     }
 
-    function fetchDashboardData() {
-        google.script.run.withSuccessHandler(function(response) {
-            if(document.getElementById('loading')) document.getElementById('loading').style.display = 'none';
-            document.getElementById('dashboardContent').style.display = 'block';
+    async function fetchDashboardData() {
+      // PENTING: Ganti tulisan di dalam tanda kutip ini dengan URL Web App dari Google Apps Script Anda
+      const webAppUrl = 'https://script.google.com/macros/s/AKfycbyea8T-QJCT6yOZaE_x5ZRpFua_fhyxH7FuQFrbjpVDjOrh8QN3Gyj8FRwfEUFlbdU-vA/exec'; 
+      
+      try {
+        const response = await fetch(webAppUrl);
+        const dataServer = await response.json();
+        
+        if(document.getElementById('loading')) document.getElementById('loading').style.display = 'none';
+        document.getElementById('dashboardContent').style.display = 'block';
+        
+        // Menyesuaikan dengan format kembalian dari Google Apps Script Anda
+        if(dataServer.status === 'success') {
+            globalDataMonthly = dataServer.dataMonthly || dataServer.data || [];
+            globalDataBapp = dataServer.dataBapp || [];
+            globalDataForm = dataServer.dataForm || [];
             
-            if(response.status === 'success') {
-                globalDataMonthly = response.dataMonthly || response.data || [];
-                globalDataBapp = response.dataBapp || [];
-                globalDataForm = response.dataForm || [];
-                
-                if(isInitialLoad) {
-                    populateFilters(globalDataMonthly); 
-                    isInitialLoad = false;
-                }
-                
-                updateDashboardUI(); 
-                updateTimestampText();
-            } else { 
-                console.error("Error: " + response.message); 
+            if(isInitialLoad) {
+                populateFilters(globalDataMonthly); 
+                isInitialLoad = false;
             }
-        }).getDashboardData();
+            
+            updateDashboardUI(); 
+            updateTimestampText();
+        } else {
+            console.error("Error dari server: " + dataServer.message);
+        }
+      } catch (error) {
+        console.error("Error memuat data:", error);
+        document.getElementById('loading').innerHTML = "Gagal memuat data. Silakan refresh halaman.";
+      }
     }
 
     fetchDashboardData();
